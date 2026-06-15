@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from services.database_service import load_movies_from_db, load_ratings_from_db
@@ -27,6 +28,13 @@ from utils.session import (
     initialize_session_state,
     is_logged_in,
 )
+from utils.ui import (
+    apply_global_styles,
+    format_genres,
+    format_year,
+    render_page_header,
+    render_section_intro,
+)
 
 
 st.set_page_config(
@@ -53,28 +61,23 @@ def get_data():
 
 def render_movie_card(
     movie,
-    favorite_movie_ids: set[int],
-    watched_movie_ids: set[int],
+    favorite_movie_ids: set,
+    watched_movie_ids: set,
 ):
     """
     Renders a movie card with favorite, watched and rating actions.
     """
     title = movie["clean_title"]
-    year = movie["year"]
-    genres = ", ".join(movie["genres_list"])
+    year = format_year(movie["year"])
+    genres = format_genres(movie["genres_list"])
     avg_rating = movie["avg_rating"]
     rating_count = int(movie["rating_count"])
     movie_id = int(movie["movieId"])
 
     with st.container(border=True):
-        st.subheader(title)
-
-        if year:
-            st.caption(f"Year: {int(year)}")
-        else:
-            st.caption("Year: Unknown")
-
-        st.write(f"**Genres:** {genres if genres else 'No genres listed'}")
+        st.subheader(f"🎬 {title}")
+        st.caption(f"Year: {year}")
+        st.write(f"**Genres:** {genres}")
 
         if rating_count > 0:
             st.write(f"⭐ **Average rating:** {avg_rating:.2f} / 5")
@@ -85,64 +88,67 @@ def render_movie_card(
         st.caption(f"MovieLens ID: {movie_id}")
 
         if not is_logged_in():
-            st.caption("Login to rate, mark as watched or save this movie.")
+            st.info("Login to rate, mark as watched or save this movie.")
             return
 
         user_id = get_current_user_id()
 
         st.divider()
 
-        # Favorite movie actions
-        if movie_id in favorite_movie_ids:
-            st.success("In favorites")
+        favorite_col, watched_col = st.columns(2)
 
-            if st.button(
-                "Remove from favorites",
-                key=f"remove_favorite_{movie_id}"
-            ):
-                remove_favorite_movie(user_id, movie_id)
-                st.success("Movie removed from favorites.")
-                st.rerun()
-        else:
-            if st.button(
-                "Add to favorites",
-                key=f"add_favorite_{movie_id}"
-            ):
-                was_added = add_favorite_movie(user_id, movie_id)
+        with favorite_col:
+            if movie_id in favorite_movie_ids:
+                st.success("In favorites")
 
-                if was_added:
-                    st.success("Movie added to favorites.")
-                else:
-                    st.info("Movie is already in favorites.")
+                if st.button(
+                    "Remove favorite",
+                    key=f"remove_favorite_{movie_id}"
+                ):
+                    remove_favorite_movie(user_id, movie_id)
+                    st.success("Movie removed from favorites.")
+                    st.rerun()
+            else:
+                if st.button(
+                    "Add favorite",
+                    key=f"add_favorite_{movie_id}"
+                ):
+                    was_added = add_favorite_movie(user_id, movie_id)
 
-                st.rerun()
+                    if was_added:
+                        st.success("Movie added to favorites.")
+                    else:
+                        st.info("Movie is already in favorites.")
 
-        # Watched movie actions
-        if movie_id in watched_movie_ids:
-            st.success("Marked as watched")
+                    st.rerun()
 
-            if st.button(
-                "Remove from watched",
-                key=f"remove_watched_{movie_id}"
-            ):
-                remove_watched_movie(user_id, movie_id)
-                st.success("Movie removed from watched list.")
-                st.rerun()
-        else:
-            if st.button(
-                "Mark as watched",
-                key=f"mark_watched_{movie_id}"
-            ):
-                was_added = mark_movie_as_watched(user_id, movie_id)
+        with watched_col:
+            if movie_id in watched_movie_ids:
+                st.success("Watched")
 
-                if was_added:
-                    st.success("Movie marked as watched.")
-                else:
-                    st.info("Movie is already marked as watched.")
+                if st.button(
+                    "Remove watched",
+                    key=f"remove_watched_{movie_id}"
+                ):
+                    remove_watched_movie(user_id, movie_id)
+                    st.success("Movie removed from watched list.")
+                    st.rerun()
+            else:
+                if st.button(
+                    "Mark watched",
+                    key=f"mark_watched_{movie_id}"
+                ):
+                    was_added = mark_movie_as_watched(user_id, movie_id)
 
-                st.rerun()
+                    if was_added:
+                        st.success("Movie marked as watched.")
+                    else:
+                        st.info("Movie is already marked as watched.")
 
-        # Rating actions
+                    st.rerun()
+
+        st.divider()
+
         current_rating = get_user_rating(user_id, movie_id)
 
         if current_rating is not None:
@@ -157,9 +163,9 @@ def render_movie_card(
             key=f"rating_slider_{movie_id}"
         )
 
-        col1, col2 = st.columns(2)
+        rating_col1, rating_col2 = st.columns(2)
 
-        with col1:
+        with rating_col1:
             if st.button(
                 "Save rating",
                 key=f"save_rating_{movie_id}"
@@ -169,7 +175,7 @@ def render_movie_card(
                 st.cache_data.clear()
                 st.rerun()
 
-        with col2:
+        with rating_col2:
             if current_rating is not None:
                 if st.button(
                     "Remove rating",
@@ -183,14 +189,13 @@ def render_movie_card(
 
 def main():
     initialize_session_state()
+    apply_global_styles()
     render_auth_sidebar("movies")
 
-    st.title("🎬 Movie Catalog")
-    st.write(
-        """
-        Browse the MovieLens movie catalog.  
-        You can search by title, filter movies, add favorites, mark watched movies and rate them.
-        """
+    render_page_header(
+        title="🎬 Movie Catalog",
+        subtitle="Browse, search, rate and save movies. Your actions help CineMatch learn your taste.",
+        badge="MovieLens Dataset"
     )
 
     if not is_logged_in():
@@ -206,6 +211,11 @@ def main():
     movies, ratings = get_data()
 
     st.divider()
+
+    render_section_intro(
+        "Search and filters",
+        "Use the filters below to find movies by title, genre, year and rating popularity."
+    )
 
     all_genres = get_all_genres(movies)
 
@@ -283,7 +293,19 @@ def main():
 
     st.divider()
 
-    st.write(f"Found **{len(filtered_movies):,}** movies.")
+    result_col1, result_col2, result_col3 = st.columns(3)
+
+    with result_col1:
+        st.metric("Found movies", f"{len(filtered_movies):,}")
+
+    with result_col2:
+        if selected_genre == "All":
+            st.metric("Genre filter", "All")
+        else:
+            st.metric("Genre filter", selected_genre)
+
+    with result_col3:
+        st.metric("Sort", sort_option)
 
     movies_per_page = st.selectbox(
         "Movies per page",
@@ -307,6 +329,10 @@ def main():
     page_movies = filtered_movies.iloc[start_index:end_index]
 
     st.caption(f"Page {current_page} of {total_pages}")
+
+    if page_movies.empty:
+        st.info("No movies found with the selected filters.")
+        return
 
     columns = st.columns(3)
 
