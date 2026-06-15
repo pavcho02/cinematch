@@ -214,5 +214,23 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# CineMatch local files
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+database/*.db-journal
+database/*.sqlite-journal
+database/*.sqlite3-journal
+
 # Streamlit
+.streamlit/
+!.streamlit/config.toml
 .streamlit/secrets.toml
+
+# Local generated data
+data/cache/
+data/processed/
+
+# OS files
+.DS_Store
+Thumbs.db
