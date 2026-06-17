@@ -353,7 +353,7 @@ The project uses the following technologies:
 ```text
 CineMatch/
 │
-├── app.py
+├── Home.py
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
@@ -626,7 +626,7 @@ and imports MovieLens data into SQLite.
 ### 6. Start the Streamlit app
 
 ```bash
-streamlit run app.py
+streamlit run Home.py
 ```
 
 The application will start at:

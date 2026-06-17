@@ -42,7 +42,7 @@ st.set_page_config(
 @st.cache_data
 def get_data_from_database():
     """
-    Loads movies and ratings from SQLite database.
+    Loads movies and ratings from the SQLite database.
     """
     movies = load_movies_from_db()
     ratings = load_ratings_from_db()
@@ -57,8 +57,8 @@ def render_project_overview():
     Renders the main project feature overview.
     """
     render_section_intro(
-        "Какво представлява CineMatch?",
-        "CineMatch е хибридна препоръчваща система за филми, която комбинира няколко подхода за персонализирани препоръки."
+        "What is CineMatch?",
+        "CineMatch is a hybrid movie recommendation system that combines several recommendation approaches to generate personalized movie suggestions."
     )
 
     col1, col2, col3 = st.columns(3)
@@ -67,21 +67,21 @@ def render_project_overview():
         render_feature_card(
             "🎯",
             "Content-Based Filtering",
-            "Препоръчва филми според жанрове, тагове и сходство между съдържанието на филмите."
+            "Recommends movies based on genres, tags and similarity between movie content profiles."
         )
 
     with col2:
         render_feature_card(
             "🤝",
             "Collaborative Filtering",
-            "Използва оценки от потребители и открива сходни потребители или сходни филми."
+            "Uses user ratings to discover similar users and similar movies based on rating patterns."
         )
 
     with col3:
         render_feature_card(
             "🏆",
             "Hybrid Recommendations",
-            "Комбинира Content-Based, User-Based, Item-Based и Genre-Based подходи."
+            "Combines Content-Based, User-Based, Item-Based and Genre-Based recommendation strategies."
         )
 
 
@@ -90,7 +90,7 @@ def render_user_onboarding():
     Renders onboarding guidance for the logged-in user.
     """
     if not is_logged_in():
-        st.info("Влез в профила си или създай акаунт, за да получаваш персонализирани препоръки.")
+        st.info("Log in or create an account to receive personalized movie recommendations.")
         return
 
     user_id = get_current_user_id()
@@ -100,51 +100,51 @@ def render_user_onboarding():
     rated_movies = get_user_ratings(user_id)
     watched_movies = get_watched_movies(user_id)
 
-    st.subheader(f"👋 Здравей, {get_current_username()}!")
+    st.subheader(f"👋 Welcome, {get_current_username()}!")
 
     st.write(
         """
-        За да получиш по-добри препоръки, CineMatch използва твоите жанрове,
-        любими филми, оценки и гледани филми.
+        CineMatch uses your favorite genres, favorite movies, ratings and watched movies
+        to build your user profile and generate better recommendations.
         """
     )
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Любими жанрове", len(favorite_genres))
+        st.metric("Favorite genres", len(favorite_genres))
 
     with col2:
-        st.metric("Любими филми", len(favorite_movies))
+        st.metric("Favorite movies", len(favorite_movies))
 
     with col3:
-        st.metric("Оценени филми", len(rated_movies))
+        st.metric("Rated movies", len(rated_movies))
 
     with col4:
-        st.metric("Гледани филми", len(watched_movies))
+        st.metric("Watched movies", len(watched_movies))
 
     st.divider()
 
     checklist_items = [
         {
             "done": len(favorite_genres) > 0,
-            "text": "Избери любими жанрове в Profile страницата."
+            "text": "Select your favorite genres on the Profile page."
         },
         {
             "done": len(favorite_movies) > 0,
-            "text": "Добави поне няколко любими филма от Movies страницата."
+            "text": "Add a few favorite movies from the Movies page."
         },
         {
             "done": len(rated_movies) >= 3,
-            "text": "Оцени поне 3–5 филма, за да работи по-добре Collaborative Filtering."
+            "text": "Rate at least 3–5 movies to improve Collaborative Filtering."
         },
         {
             "done": len(watched_movies) > 0,
-            "text": "Маркирай филми като гледани, за да се активират секциите 'Because you watched'."
+            "text": "Mark movies as watched to activate 'Because you watched' recommendations."
         },
     ]
 
-    st.subheader("✅ Препоръчани стъпки")
+    st.subheader("✅ Recommended setup steps")
 
     for item in checklist_items:
         if item["done"]:
@@ -158,8 +158,8 @@ def render_popular_movies(movies, ratings):
     Renders popular movies on the home page.
     """
     render_section_intro(
-        "🔥 Популярни високо оценени филми",
-        "Това са филми с много оценки и висока средна оценка в MovieLens dataset-а."
+        "🔥 Popular highly rated movies",
+        "These movies have many ratings and a high average rating in the MovieLens dataset."
     )
 
     popular_movies = get_popular_movies(
@@ -214,7 +214,7 @@ def main():
         st.metric("Tags", f"{summary.get('tags', 0):,}")
 
     with col4:
-        st.metric("CineMatch Users", f"{summary.get('users', 0):,}")
+        st.metric("CineMatch users", f"{summary.get('users', 0):,}")
 
     st.divider()
 
@@ -234,12 +234,12 @@ def main():
 
     st.info(
         """
-        Използвай страниците от sidebar менюто:
+        Use the sidebar pages to explore the system:
 
-        - **Movies** — търсене, оценяване, любими и гледани филми;
-        - **Profile** — любими жанрове, любими филми, оценки и гледани филми;
-        - **Recommendations** — всички препоръчващи алгоритми;
-        - **Evaluation** — Precision@K, Recall@K и MAE.
+        - **Movies** — browse, search, rate, favorite and mark movies as watched;
+        - **Profile** — manage favorite genres, favorite movies, ratings and watched movies;
+        - **Recommendations** — view all recommendation algorithms and hybrid results;
+        - **Evaluation** — evaluate algorithms using Precision@K, Recall@K and MAE.
         """
     )
 
