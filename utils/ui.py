@@ -187,17 +187,40 @@ def format_year(value):
         return "Unknown"
 
 
-def format_genres(genres_list):
+def format_genres(genres_value):
     """
-    Formats a list of genres for display.
+    Formats genres consistently across the whole application.
+
+    MovieLens stores genres as:
+        Action|Adventure|Sci-Fi
+
+    The UI displays them as:
+        Action, Adventure, Sci-Fi
     """
-    if not genres_list:
+    if genres_value is None:
         return "No genres listed"
 
-    if isinstance(genres_list, list):
-        return ", ".join(genres_list)
+    if isinstance(genres_value, float) and pd.isna(genres_value):
+        return "No genres listed"
 
-    return str(genres_list)
+    if isinstance(genres_value, list):
+        cleaned_genres = [
+            str(genre).strip()
+            for genre in genres_value
+            if str(genre).strip()
+        ]
+
+        if not cleaned_genres:
+            return "No genres listed"
+
+        return ", ".join(cleaned_genres)
+
+    genres_text = str(genres_value).strip()
+
+    if not genres_text or genres_text == "(no genres listed)":
+        return "No genres listed"
+
+    return genres_text.replace("|", ", ")
 
 
 def render_movie_preview_card(movie):
@@ -206,7 +229,13 @@ def render_movie_preview_card(movie):
     """
     title = html.escape(str(movie["clean_title"]))
     year = format_year(movie.get("year"))
-    genres = html.escape(str(movie.get("genres", "No genres listed")))
+
+    genres_value = movie.get(
+        "genres_list",
+        movie.get("genres", "No genres listed")
+    )
+
+    genres = html.escape(format_genres(genres_value))
 
     avg_rating = movie.get("avg_rating", None)
     rating_count = movie.get("rating_count", None)
@@ -216,7 +245,7 @@ def render_movie_preview_card(movie):
     if avg_rating is not None and rating_count is not None:
         rating_html = (
             f"<p>⭐ <strong>{float(avg_rating):.2f}</strong> / 5 "
-            f"от {int(rating_count)} оценки</p>"
+            f"from {int(rating_count)} ratings</p>"
         )
 
     st.markdown(
@@ -224,7 +253,7 @@ def render_movie_preview_card(movie):
         <div class="cinematch-card">
             <h3>🎬 {title}</h3>
             <p class="cinematch-muted">{year}</p>
-            <p><strong>Жанрове:</strong> {genres}</p>
+            <p><strong>Genres:</strong> {genres}</p>
             {rating_html}
         </div>
         """,

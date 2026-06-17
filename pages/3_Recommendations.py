@@ -19,6 +19,7 @@ from utils.session import (
     initialize_session_state,
     is_logged_in,
 )
+from utils.ui import format_genres
 
 
 st.set_page_config(
@@ -131,7 +132,7 @@ def render_recommendation_card(movie, score_column=None):
         else:
             st.caption("Year: Unknown")
 
-        st.write(f"**Genres:** {movie['genres']}")
+        st.write(f"**Genres:** {format_genres(movie['genres'])}")
 
         if score_column is not None and score_column in movie:
             st.write(f"🎯 **Score:** {movie[score_column]:.4f}")
