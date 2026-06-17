@@ -239,7 +239,7 @@ def main():
         - **Movies** — browse, search, rate, favorite and mark movies as watched;
         - **Profile** — manage favorite genres, favorite movies, ratings and watched movies;
         - **Recommendations** — view all recommendation algorithms and hybrid results;
-        - **Evaluation** — evaluate algorithms using Precision@K, Recall@K and MAE.
+        - **Evaluation** — evaluate algorithms using Precision@K and Recall@K.
         """
     )
 

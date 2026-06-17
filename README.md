@@ -315,21 +315,6 @@ Recall@K measures how many relevant movies were successfully recommended.
 Recall@K = relevant recommended movies / all relevant movies
 ```
 
-### MAE
-
-MAE stands for Mean Absolute Error.
-
-It measures the average difference between predicted ratings and real ratings.
-
-```text
-MAE = average absolute error between actual and predicted ratings
-```
-
-MAE is mainly used for algorithms that predict explicit ratings, such as:
-
-* User-Based Collaborative Filtering;
-* Item-Based Collaborative Filtering.
-
 ---
 
 ## 🛠️ Technologies Used
@@ -715,8 +700,7 @@ The Recommendations page contains:
 The Evaluation page calculates:
 
 * Precision@K;
-* Recall@K;
-* MAE.
+* Recall@K.
 
 ---
 
