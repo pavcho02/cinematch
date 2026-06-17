@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 def precision_at_k(recommended_ids, relevant_ids, k: int) -> float:
     """
     Calculates Precision@K.
@@ -38,21 +35,3 @@ def recall_at_k(recommended_ids, relevant_ids, k: int) -> float:
     hits = sum(1 for movie_id in recommended_at_k if movie_id in relevant_set)
 
     return hits / len(relevant_set)
-
-
-def mean_absolute_error(actual_values, predicted_values):
-    """
-    Calculates MAE.
-
-    MAE = mean absolute difference between actual and predicted ratings.
-    """
-    if len(actual_values) == 0 or len(predicted_values) == 0:
-        return None
-
-    actual_series = pd.Series(actual_values, dtype="float")
-    predicted_series = pd.Series(predicted_values, dtype="float")
-
-    if len(actual_series) != len(predicted_series):
-        return None
-
-    return float((actual_series - predicted_series).abs().mean())

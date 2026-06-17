@@ -39,6 +39,7 @@ def main():
     render_auth_sidebar("evaluation")
 
     st.title("📊 Evaluation Metrics")
+
     st.write(
         """
         This page evaluates CineMatch recommendation algorithms using MovieLens ratings.
@@ -46,6 +47,9 @@ def main():
         The evaluation uses a train/test split:
         - train ratings are used to generate recommendations;
         - test ratings are used to check whether the recommendations were relevant.
+
+        Since CineMatch is mainly a top-K recommendation system, the evaluation focuses on
+        ranking metrics: Precision@K and Recall@K.
         """
     )
 
@@ -66,10 +70,10 @@ def main():
 
         max_users = st.slider(
             "Number of MovieLens users to evaluate",
-            min_value=5,
-            max_value=100,
-            value=20,
-            step=5
+            min_value=3,
+            max_value=50,
+            value=5,
+            step=1
         )
 
     with col2:
@@ -109,11 +113,29 @@ def main():
     st.info(
         """
         Evaluation can take some time because several algorithms are executed.
-        For quick testing, use 5–20 users. For more stable results, increase the number of users.
+
+        Recommended starting settings:
+        - Number of MovieLens users: 5
+        - Minimum ratings per user: 20
+        - K: 10
+        - Relevant rating threshold: 4.0
+
+        If the evaluation runs successfully, you can increase the number of users to 10, 20 or more.
         """
     )
 
-    run_evaluation = st.button("Run evaluation")
+    col_run, col_clear = st.columns([1, 1])
+
+    with col_run:
+        run_evaluation = st.button("Run evaluation")
+
+    with col_clear:
+        clear_cache = st.button("Clear evaluation cache")
+
+    if clear_cache:
+        st.cache_data.clear()
+        st.success("Evaluation cache cleared.")
+        st.rerun()
 
     if not run_evaluation:
         st.warning("Click **Run evaluation** to calculate the metrics.")
@@ -130,7 +152,16 @@ def main():
         )
 
     if summary_df.empty:
-        st.error("Evaluation could not be completed. Try lowering the minimum ratings per user.")
+        st.error(
+            """
+            Evaluation could not be completed.
+
+            Try:
+            - lowering Minimum ratings per user;
+            - lowering Number of MovieLens users;
+            - changing Random state.
+            """
+        )
         return
 
     st.success("Evaluation completed.")
@@ -161,13 +192,9 @@ def main():
     display_df[precision_column] = display_df[precision_column].round(4)
     display_df[recall_column] = display_df[recall_column].round(4)
 
-    display_df["mae"] = display_df["mae"].apply(
-        lambda value: round(value, 4) if value is not None else None
-    )
-
     st.dataframe(
         display_df,
-        use_container_width=True
+        width="stretch"
     )
 
     st.divider()
@@ -176,13 +203,12 @@ def main():
 
     st.write(
         f"""
-        **Precision@{k}** shows what part of the top {k} recommendations were actually relevant.
+        **Precision@{k}** shows what part of the top {k} recommended movies were relevant.
 
         **Recall@{k}** shows what part of the user's relevant test movies were successfully recommended.
 
-        **MAE** shows the average rating prediction error.
-        MAE is mainly meaningful for algorithms that predict explicit ratings,
-        such as User-Based CF and Item-Based CF.
+        These metrics are suitable for CineMatch because the system returns ranked lists of movie
+        recommendations rather than predicting exact rating values.
         """
     )
 
