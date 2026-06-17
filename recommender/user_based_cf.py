@@ -5,14 +5,9 @@ def build_user_movie_matrix(ratings: pd.DataFrame) -> pd.DataFrame:
     """
     Builds a user-movie rating matrix.
 
-    Rows:
-        users
-
-    Columns:
-        movies
-
-    Values:
-        ratings
+    Rows are users.
+    Columns are movies.
+    Values are ratings.
     """
     rating_matrix = ratings.pivot_table(
         index="userId",
@@ -21,6 +16,42 @@ def build_user_movie_matrix(ratings: pd.DataFrame) -> pd.DataFrame:
     )
 
     return rating_matrix
+
+
+def safe_pearson_correlation(first_ratings: pd.Series, second_ratings: pd.Series):
+    """
+    Safely calculates Pearson correlation between two rating vectors.
+
+    Pearson correlation is undefined when one of the vectors has no variance,
+    for example [5.0, 5.0, 5.0]. In such cases, pandas/numpy may produce
+    RuntimeWarning messages.
+
+    This helper prevents that by checking:
+        - at least 2 common values;
+        - variance in both vectors;
+        - non-NaN result.
+    """
+    first_ratings = first_ratings.astype(float)
+    second_ratings = second_ratings.astype(float)
+
+    if len(first_ratings) < 2 or len(second_ratings) < 2:
+        return None
+
+    if first_ratings.nunique() < 2:
+        return None
+
+    if second_ratings.nunique() < 2:
+        return None
+
+    similarity = first_ratings.corr(
+        second_ratings,
+        method="pearson"
+    )
+
+    if pd.isna(similarity):
+        return None
+
+    return float(similarity)
 
 
 def find_similar_users(
@@ -60,12 +91,15 @@ def find_similar_users(
         if common_items_count < min_common_items:
             continue
 
-        similarity = target_user_ratings[common_ratings].corr(
-            other_user_ratings[common_ratings],
-            method="pearson"
+        target_common_ratings = target_user_ratings[common_ratings]
+        other_common_ratings = other_user_ratings[common_ratings]
+
+        similarity = safe_pearson_correlation(
+            target_common_ratings,
+            other_common_ratings
         )
 
-        if pd.isna(similarity):
+        if similarity is None:
             continue
 
         if similarity <= 0:
@@ -74,7 +108,7 @@ def find_similar_users(
         similar_users.append(
             {
                 "similar_user_id": int(other_user_id),
-                "similarity": float(similarity),
+                "similarity": similarity,
                 "common_items": common_items_count
             }
         )
@@ -102,8 +136,8 @@ def get_user_based_recommendations(
     user_id: int,
     ratings: pd.DataFrame,
     movies: pd.DataFrame,
-    favorite_movie_ids: set[int],
-    watched_movie_ids: set[int],
+    favorite_movie_ids: set,
+    watched_movie_ids: set,
     top_n: int = 10,
     similar_users_count: int = 20,
     min_common_items: int = 2,
@@ -112,12 +146,12 @@ def get_user_based_recommendations(
     """
     Generates User-Based Collaborative Filtering recommendations.
 
-    The algorithm:
-        1. Builds a user-movie rating matrix.
-        2. Finds similar users using Pearson correlation.
-        3. Takes movies highly rated by similar users.
-        4. Excludes movies already rated, watched or favorited by current user.
-        5. Scores candidates using weighted average rating.
+    Steps:
+        1. Build user-movie matrix.
+        2. Find similar users using Pearson correlation.
+        3. Get movies highly rated by similar users.
+        4. Exclude movies already rated, watched or favorited by the current user.
+        5. Rank movies by weighted predicted rating.
     """
     if ratings.empty:
         return pd.DataFrame()

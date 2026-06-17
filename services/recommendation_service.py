@@ -404,10 +404,10 @@ def get_hybrid_recommendations(
     Returns final hybrid recommendations for the user.
 
     This combines:
-        - Content-Based Filtering
-        - Genre-Based Cold Start
-        - User-Based Collaborative Filtering
-        - Item-Based Collaborative Filtering
+        - Content-Based Filtering;
+        - Genre-Based Cold Start;
+        - User-Based Collaborative Filtering;
+        - Item-Based Collaborative Filtering.
     """
     content_recommendations = get_content_recommendations(
         user_id=user_id,
@@ -424,7 +424,7 @@ def get_hybrid_recommendations(
         user_id=user_id,
         top_n=30,
         similar_users_count=20,
-        min_common_items=1,
+        min_common_items=2,
         min_neighbor_rating=4.0
     )
 
@@ -432,7 +432,7 @@ def get_hybrid_recommendations(
         user_id=user_id,
         top_n=30,
         similar_items_count=20,
-        min_common_users=1
+        min_common_users=2
     )
 
     hybrid_recommendations = combine_hybrid_recommendations(

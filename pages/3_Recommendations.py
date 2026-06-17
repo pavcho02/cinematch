@@ -191,7 +191,7 @@ def render_hybrid_tab(user_id: int):
         """
         This is the final hybrid recommendation section.
         CineMatch combines multiple recommendation strategies into one ranking:
-        
+
         - Content-Based Filtering
         - Genre-Based Cold Start
         - User-Based Collaborative Filtering
@@ -506,7 +506,7 @@ def render_user_based_cf_tab(user_id: int):
     with col2:
         min_common_items = st.slider(
             "Minimum commonly rated movies",
-            min_value=1,
+            min_value=2,
             max_value=10,
             value=2,
             step=1,
@@ -594,7 +594,7 @@ def render_item_based_cf_tab(user_id: int):
     with col2:
         min_common_users = st.slider(
             "Minimum common users between movies",
-            min_value=1,
+            min_value=2,
             max_value=20,
             value=2,
             step=1,
@@ -653,7 +653,6 @@ def render_item_based_cf_tab(user_id: int):
             No item-based collaborative recommendations found yet.
 
             Try rating or marking more popular movies as watched.
-            You can also lower the minimum common users value.
             """
         )
         return
@@ -674,7 +673,7 @@ def main():
     st.write(
         """
         CineMatch currently supports:
-        
+
         - Hybrid Recommendation System
         - Content-Based Filtering with TF-IDF and cosine similarity
         - Genre-based cold start recommendations

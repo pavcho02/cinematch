@@ -18,6 +18,40 @@ def build_user_movie_matrix(ratings: pd.DataFrame) -> pd.DataFrame:
     return rating_matrix
 
 
+def safe_pearson_correlation(first_ratings: pd.Series, second_ratings: pd.Series):
+    """
+    Safely calculates Pearson correlation between two rating vectors.
+
+    Pearson correlation is undefined when:
+        - there are fewer than 2 common values;
+        - one vector has no variance;
+        - the result is NaN.
+
+    This prevents RuntimeWarning messages from NumPy/Pandas.
+    """
+    first_ratings = first_ratings.astype(float)
+    second_ratings = second_ratings.astype(float)
+
+    if len(first_ratings) < 2 or len(second_ratings) < 2:
+        return None
+
+    if first_ratings.nunique() < 2:
+        return None
+
+    if second_ratings.nunique() < 2:
+        return None
+
+    similarity = first_ratings.corr(
+        second_ratings,
+        method="pearson"
+    )
+
+    if pd.isna(similarity):
+        return None
+
+    return float(similarity)
+
+
 def find_similar_items(
     movie_id: int,
     rating_matrix: pd.DataFrame,
@@ -54,12 +88,15 @@ def find_similar_items(
         if common_users_count < min_common_users:
             continue
 
-        similarity = target_movie_ratings[common_ratings].corr(
-            other_movie_ratings[common_ratings],
-            method="pearson"
+        target_common_ratings = target_movie_ratings[common_ratings]
+        other_common_ratings = other_movie_ratings[common_ratings]
+
+        similarity = safe_pearson_correlation(
+            target_common_ratings,
+            other_common_ratings
         )
 
-        if pd.isna(similarity):
+        if similarity is None:
             continue
 
         if similarity <= 0:
@@ -68,7 +105,7 @@ def find_similar_items(
         similar_items.append(
             {
                 "movieId": int(other_movie_id),
-                "item_similarity": float(similarity),
+                "item_similarity": similarity,
                 "common_users": common_users_count
             }
         )
@@ -154,9 +191,9 @@ def calculate_seed_weight(
     Calculates how important a seed movie is for item-based recommendations.
 
     A movie can be important because:
-        - the user rated it highly
-        - the user added it to favorites
-        - the user watched it
+        - the user rated it highly;
+        - the user added it to favorites;
+        - the user watched it.
     """
     weight = 0.0
 
